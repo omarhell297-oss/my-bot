@@ -1,0 +1,34 @@
+import logging
+from aiogram import Bot, Dispatcher, types
+from aiogram.utils import executor
+import yt_dlp
+
+# استبدل التوكن هنا بالتوكن الخاص بك
+TOKEN = "YOUR_TOKEN_HERE"
+
+logging.basicConfig(level=logging.INFO)
+bot = Bot(token=TOKEN)
+dp = Dispatcher(bot)
+
+@dp.message_handler(commands=['start'])
+async def start(message: types.Message):
+    await message.reply("أهلاً بك! أرسل لي رابط فيديو وسأقوم بتحميله.")
+
+@dp.message_handler()
+async def download_video(message: types.Message):
+    url = message.text
+    if "http" in url:
+        await message.reply("جاري التحميل... انتظر لحظة.")
+        try:
+            ydl_opts = {'format': 'best', 'outtmpl': 'video.mp4'}
+            with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+                ydl.download([url])
+            with open('video.mp4', 'rb') as video:
+                await message.reply_video(video)
+        except Exception as e:
+            await message.reply(f"حدث خطأ: {e}")
+    else:
+        await message.reply("الرجاء إرسال رابط صحيح.")
+
+if __name__ == '__main__':
+    executor.start_polling(dp, skip_updates=True)
